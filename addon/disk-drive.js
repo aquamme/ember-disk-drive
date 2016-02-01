@@ -1,5 +1,6 @@
 /* global require, requirejs */
 import Ember from 'ember';
+import { Response } from 'fetch';
 
 const { RSVP, assert, testing } = Ember;
 
@@ -13,6 +14,7 @@ export default {
     let isRecording;
 
     if (recording) {
+      recording = buildResponseObjects(recording);
       fetchService.set('__recordings', recording);
       isRecording = false;
     } else {
@@ -29,18 +31,30 @@ export default {
 
         //console.log(name);
 
-        convertToModule(newRecordings).then(recordings => {
-          downloadRecording(name, recordings);
-        });
+        if (newRecordings) {
+          convertToModule(newRecordings).then(recordings => {
+            downloadRecording(name, recordings);
+          });
+        }
       }
     });
   }
 };
 
+// TODO: a more exact matching alg
+// TODO: allow nested folders for recordings
 function recordingFor (name) {
   let recordings = readRecordings();
 
-  return recordings[name];
+  let fullKey = Object.keys(recordings).filter(key => {
+    let keyPathFragments = key.split('/');
+
+    return name === keyPathFragments[keyPathFragments.length -1];
+  });
+
+  assert('Should only find one match - fix the alg', fullKey.length <= 1);
+
+  return recordings[fullKey[0]];
 }
 
 // Code and inspiration taken from ember-cli-mirage
@@ -50,6 +64,7 @@ function readRecordings () {
   let modulesMap = {};
   Object.keys(requirejs._eak_seen)
     .filter(key => recordingsRegex.test(key))
+    .filter(key => !/.jshint$/.test(key)) // filter jshint modules
     .forEach(moduleName => {
       let module = require(moduleName, null, null, true);
       if (!module) { throw new Error(moduleName + ' must export a recording'); }
@@ -68,6 +83,16 @@ function convertToModule (recordings = {}) {
     recordings.push(';');
     return recordings;
   });
+}
+
+function buildResponseObjects (recordings) {
+  Object.keys(recordings).map(key => {
+    let ra = recordings[key].response;
+
+    recordings[key].response = new Response(JSON.stringify(ra.body), ra.init);
+  });
+
+  return recordings;
 }
 
 // TODO: get rid of object/array conversion funkiness

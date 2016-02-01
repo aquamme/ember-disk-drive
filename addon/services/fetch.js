@@ -12,6 +12,8 @@ export default Service.extend({
   __shouldRecord: false,
 
   // TODO: don't assume 'input' is a string
+  // TODO: tolerance for differences in query parameter ordering? might be the responsibility of
+  // the consumer to order params consistently
   fetch (input, init = {}) {
     if (!testing) {
       return fetch(input, init);
