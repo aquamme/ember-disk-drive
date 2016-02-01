@@ -13,7 +13,7 @@ export default {
     let isRecording;
 
     if (recording) {
-      fetchService.set('__recording', recording);
+      fetchService.set('__recordings', recording);
       isRecording = false;
     } else {
       isRecording = true;
@@ -23,12 +23,15 @@ export default {
 
     return new RSVP.Promise(resolve => callback(resolve)).finally(() => {
       if (isRecording) {
-        let newRecording = fetchService.get('__recording');
+        let newRecordings = fetchService.get('__recordings');
 
         fetchService.set('__shouldRecord', false);
 
-        console.log(name);
-        console.log(newRecording);
+        //console.log(name);
+
+        convertToModule(newRecordings).then(recordings => {
+          downloadRecording(name, recordings);
+        });
       }
     });
   }
@@ -57,4 +60,56 @@ function readRecordings () {
     });
 
   return modulesMap;
+}
+
+function convertToModule (recordings = {}) {
+  return serializeRecordings(recordings).then(recordings => {
+    recordings.unshift('export default ');
+    recordings.push(';');
+    return recordings;
+  });
+}
+
+// TODO: get rid of object/array conversion funkiness
+// TODO: don't assume the `input` param for fetch is a string
+function serializeRecordings (recordings = {}) {
+  let recArr = Object.keys(recordings).map(key => recordings[key]);
+
+  return RSVP.all(recArr.map(recording => {
+    return convertRequestToPlainObject(recording.response).then(pojodResponse => {
+      let ret = {};
+
+      ret[recording.fetchArgs.input] = {
+        fetchArgs: recording.fetchArgs,
+        response: pojodResponse
+      };
+
+      return JSON.stringify(ret);
+    });
+  }));
+}
+
+// TODO: support more than just json
+function convertRequestToPlainObject (request) {
+  return request.json().then(json => {
+    return {
+      body: json,
+      init: {
+        status: request.status,
+        statusText: request.statusText,
+        headers: request.headers,
+      }
+    };
+  });
+}
+
+function downloadRecording (name, data) {
+  var blob = new window.Blob(data);
+  var encodedUri = window.URL.createObjectURL(blob);
+  var link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `${name}.js`);
+  link.click();
+
+  console.log('Downloading new recording:', name);
 }
