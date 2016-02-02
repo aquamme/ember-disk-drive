@@ -1,7 +1,7 @@
 {
   "name": "ember-disk-drive",
-  "version": "0.0.3",
-  "description": "The default blueprint for ember-cli addons.",
+  "version": "0.1.0",
+  "description": "Request recording tools for ember-cli",
   "directories": {
     "doc": "doc",
     "test": "tests"
@@ -15,7 +15,7 @@
   "engines": {
     "node": ">= 0.10.0"
   },
-  "author": "",
+  "author": "Aaron Quamme",
   "license": "MIT",
   "devDependencies": {
     "broccoli-asset-rev": "^2.2.0",
