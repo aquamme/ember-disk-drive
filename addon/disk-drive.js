@@ -122,12 +122,16 @@ function convertRequestToPlainObject (request) {
 
 // Code taken from ember-cli-betamax
 function downloadRecording (name, data) {
-  var blob = new window.Blob(data);
-  var encodedUri = window.URL.createObjectURL(blob);
-  var link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `${name}.js`);
-  link.click();
+  try {
+    var blob = new window.Blob(data);
+    var encodedUri = window.URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${name}.js`);
+    link.click();
 
-  console.log('Downloading new recording:', name);
+    console.log('Downloading new recording:', name);
+  } catch (e) {
+    console.log('Could not download recording:', e.message);
+  }
 }
