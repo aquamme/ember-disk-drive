@@ -29,8 +29,6 @@ export default {
 
         fetchService.set('__shouldRecord', false);
 
-        //console.log(name);
-
         if (newRecordings) {
           convertToModule(newRecordings).then(recordings => {
             downloadRecording(name, recordings);
@@ -79,14 +77,14 @@ function readRecordings () {
 
 function convertToModule (recordings = {}) {
   return serializeRecordings(recordings).then(recordings => {
-    recordings.unshift('export default ');
-    recordings.push(';');
+    recordings.unshift('export default {');
+    recordings.push('};');
     return recordings;
   });
 }
 
 function buildResponseObjects (recordings) {
-  Object.keys(recordings).map(key => {
+  Object.keys(recordings).forEach(key => {
     let ra = recordings[key].response;
 
     recordings[key].response = new Response(JSON.stringify(ra.body), ra.init);
@@ -98,18 +96,16 @@ function buildResponseObjects (recordings) {
 // TODO: get rid of object/array conversion funkiness
 // TODO: don't assume the `input` param for fetch is a string
 function serializeRecordings (recordings = {}) {
-  let recArr = Object.keys(recordings).map(key => recordings[key]);
+  return RSVP.all(Object.keys(recordings).map(recordingKey => {
+    let recording = recordings[recordingKey];
 
-  return RSVP.all(recArr.map(recording => {
     return convertRequestToPlainObject(recording.response).then(pojodResponse => {
-      let ret = {};
-
-      ret[recording.fetchArgs.input] = {
+      let ret = {
         fetchArgs: recording.fetchArgs,
         response: pojodResponse
       };
 
-      return JSON.stringify(ret);
+      return `"${recordingKey}":${JSON.stringify(ret)}`;
     });
   }));
 }
@@ -128,6 +124,7 @@ function convertRequestToPlainObject (request) {
   });
 }
 
+// Code taken from ember-cli-betamax
 function downloadRecording (name, data) {
   var blob = new window.Blob(data);
   var encodedUri = window.URL.createObjectURL(blob);
