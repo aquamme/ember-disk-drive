@@ -76,11 +76,7 @@ function readRecordings () {
 }
 
 function convertToModule (recordings = {}) {
-  return serializeRecordings(recordings).then(recordings => {
-    recordings.unshift('export default {');
-    recordings.push('};');
-    return recordings;
-  });
+  return serializeRecordings(recordings).then(recordings => ['export default {', recordings.join(','), '};']);
 }
 
 function buildResponseObjects (recordings) {
