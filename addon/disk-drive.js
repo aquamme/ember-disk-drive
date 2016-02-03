@@ -2,7 +2,15 @@
 import Ember from 'ember';
 import { Response } from 'fetch';
 
-const { RSVP, assert, testing } = Ember;
+const {
+  Logger,
+  RSVP,
+  assert,
+  run,
+  testing
+} = Ember;
+
+const info = Logger.info;
 
 export default {
   useRecording (name, application, callback) {
@@ -13,27 +21,31 @@ export default {
     let recording = recordingFor(name);
     let isRecording;
 
+    const setOnFetch = ((key, val) => run(() => fetchService.set(key, val)));
+
     if (recording) {
       recording = buildResponseObjects(recording);
-      fetchService.set('__recordings', recording);
+      setOnFetch('__recordings', recording);
       isRecording = false;
     } else {
       isRecording = true;
     }
 
-    fetchService.set('__shouldRecord', isRecording);
+    setOnFetch('__shouldRecord', isRecording);
 
     return new RSVP.Promise(resolve => callback(resolve)).finally(() => {
       if (isRecording) {
         let newRecordings = fetchService.get('__recordings');
 
-        fetchService.set('__shouldRecord', false);
+        setOnFetch('__shouldRecord', false);
 
         if (newRecordings) {
-          convertToModule(newRecordings).then(recordings => {
-            downloadRecording(name, recordings);
-          });
+          convertToModule(newRecordings).then(recordings => downloadRecording(name, recordings));
+        } else {
+          info('No new recordings to download. Something went wrong.');
         }
+      } else {
+        info('Did not record anything.');
       }
     });
   }
@@ -126,12 +138,17 @@ function downloadRecording (name, data) {
     var blob = new window.Blob(data);
     var encodedUri = window.URL.createObjectURL(blob);
     var link = document.createElement("a");
+
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", `${name}.js`);
     link.click();
+    document.body.removeChild(link);
 
-    console.log('Downloading new recording:', name);
+    info('Downloading new recording:', name);
   } catch (e) {
-    console.log('Could not download recording:', e.message);
+    info('Could not download recording:', e.message);
   }
 }

@@ -2,10 +2,14 @@ import Ember from 'ember';
 import fetch from 'fetch';
 
 const {
+  Logger,
   RSVP,
   Service,
+  run,
   testing
 } = Ember;
+
+const info = Logger.info;
 
 export default Service.extend({
   __recordings: null,
@@ -32,13 +36,13 @@ export default Service.extend({
       if (this.__hasRecordingFor(input, init)) {
         return RSVP.resolve(this.__getRecordingFor(input, init).response.clone());
       }
-      console.log('No recording for ', input);
+      info('No recording for ', input);
     }
 
     if (this.get('__shouldRecord')) {
-      console.log('Recording request for ', input);
+      info('Recording request for ', input);
 
-      return doFetch().then(recordResponse, recordResponse);
+      return doFetch().then(recordResponse);
     } else {
       return doFetch();
     }
@@ -58,18 +62,24 @@ export default Service.extend({
   },
 
   __setRecordingFor (input, init, response) {
-    let currentRecordings = this.get('__recordings');
+    run(() => {
+      let currentRecordings = this.get('__recordings');
 
-    if (!currentRecordings) {
-      currentRecordings = {};
-    }
+      if (!currentRecordings) {
+        currentRecordings = {};
+      }
 
-    if (this.__hasRecordingFor(input, init)) {
-      Ember.Logger.warn(`A recording for the endpoint ${input} already exists - overwriting`);
-    }
+      if (this.__hasRecordingFor(input, init)) {
+        Ember.Logger.warn(`A recording for the endpoint ${input} already exists - overwriting`);
+      }
 
-    currentRecordings[this.__keyForRecording(input, init)] = { fetchArgs: { input, init }, response: response.clone() };
+      currentRecordings[this.__keyForRecording(input, init)] = { fetchArgs: { input, init }, response: response.clone() };
 
-    this.set('__recordings', currentRecordings);
+      if (this.get('isDestroyed')) {
+        throw new Error(`The ember-disk-drive fetch service was destroyed before all network requests finished. You need to wrap any code with asynchronous side-effects in an Ember.run. Request URL: ${input}`);
+      } else {
+        this.set('__recordings', currentRecordings);
+      }
+    });
   }
 });

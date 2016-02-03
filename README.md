@@ -25,6 +25,7 @@ Here are the current known limitations:
   allows for a [Request](https://developer.mozilla.org/en-US/docs/Web/API/Request) object to be
   passed as the first arg. This shouldn't be too hard, but isn't a priority at the moment.
 * Only JSON responses are supported at the moment.
+* You cannot use the same recording name across tests while creating the recordings.
 
 If that didn't scare you away, I'd be glad to hear any feedback - bug reports, feature requests,
 and PRs are all welcome.
@@ -37,6 +38,7 @@ and PRs are all welcome.
 #### Planned features
 * The ability to override a request with a fixture. This would be useful for testing
   error handling.
+* The ability to seamlessly share recordings between tests
 
 #### Who might find this addon useful?
 While there are a few ember addons that already do something similar to this one, they each have
@@ -86,8 +88,10 @@ test('Cool stuff is shown', function (assert) {
 
     andThen(function () {
       // assert stuff
-      done();
     });
+
+    // `done` should be called at the very end of the callback
+    done();
   });
 });
 ```
@@ -97,6 +101,12 @@ once the test completes. Put the file in your `tests/recordings/` folder. The re
 responses will be used when tests are run. Any requests that don't have a recorded response
 will be passed through. If you wish to rerecord a test, simply delete the appropriate
 recording first (in this case, `tests/recordings/application-route-recording.js`).
+
+If making multiple recordings in a single session, your browser will prompt you to allow multiple files
+to be downloaded.
+
+Browser compatibility has not yet been tested - development is happening in Chrome. Saving new recordings
+does not work in phantomjs, but existing recordings can be run.
 
 ## Running
 
