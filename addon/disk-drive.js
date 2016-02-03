@@ -18,27 +18,22 @@ export default {
     assert('useRecording may only be used in testing mode', testing);
 
     let fetchService = application.__container__.lookup('service:fetch');
-    let recording = recordingFor(name);
+    let existingRecording = recordingFor(name);
     let isRecording;
 
     const setOnFetch = ((key, val) => run(() => fetchService.set(key, val)));
 
-    if (recording) {
-      recording = buildResponseObjects(recording);
-      setOnFetch('__recordings', recording);
+    if (existingRecording) {
+      existingRecording = buildResponseObjects(existingRecording);
+      setOnFetch('__recordings', existingRecording);
       isRecording = false;
     } else {
       isRecording = true;
     }
 
     setOnFetch('__shouldRecord', isRecording);
-
-    return new RSVP.Promise(resolve => callback(resolve)).finally(() => {
+    setOnFetch('__recordingCompleteCallback', function (newRecordings) {
       if (isRecording) {
-        let newRecordings = fetchService.get('__recordings');
-
-        setOnFetch('__shouldRecord', false);
-
         if (newRecordings) {
           convertToModule(newRecordings).then(recordings => downloadRecording(name, recordings));
         } else {
@@ -48,6 +43,8 @@ export default {
         info('Did not record anything.');
       }
     });
+
+    run(callback);
   }
 };
 

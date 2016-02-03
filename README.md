@@ -83,15 +83,12 @@ import DiskDrive from 'ember-disk-drive/disk-drive';
 moduleFor('Acceptance: Application Route');
 
 test('Cool stuff is shown', function (assert) {
-  DiskDrive.useRecording('application-route-recording', this.application, function (done) {
+  DiskDrive.useRecording('application-route-recording', this.application, function () {
     visit('/');
 
     andThen(function () {
       // assert stuff
     });
-
-    // `done` should be called at the very end of the callback
-    done();
   });
 });
 ```
