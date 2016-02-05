@@ -9,26 +9,15 @@ const {
   testing
 } = Ember;
 
-const info = Logger.info;
+const isDevelopingAddon = false;
+
+const info = (() => isDevelopingAddon ? Logger.info(...arguments) : null);
 
 export default Service.extend({
-  __outstandingRequestCount: 0,
   __recordings: null,
   __shouldRecord: false,
 
-  __incrementOutstandingRequestCount () {
-    this.incrementProperty('__outstandingRequestCount');
-  },
-
-  __decrementOutstandingRequestCount () {
-    this.decrementProperty('__outstandingRequestCount');
-  },
-
   willDestroy () {
-    if (this.get('__outstandingRequestCount') > 0) {
-      throw new Error(`The ember-disk-drive fetch service was destroyed before all network requests finished. You need to wrap any code with asynchronous side-effects in an Ember.run.`);
-    }
-
     this.__recordingCompleteCallback(this.get('__recordings'));
   },
 
@@ -36,19 +25,16 @@ export default Service.extend({
   // TODO: tolerance for differences in query parameter ordering? might be the responsibility of
   // the consumer to order params consistently
   fetch (input, init = {}) {
-    const doFetch = () => {
-      this.__incrementOutstandingRequestCount();
-      return fetch(input, init);
-    };
-
     const recordResponse = response => {
+      if (this.get('isDestroyed') || this.get('isDestroying')) {
+        throw new Error(`ember-disk-drive - the following request completed after the fetch service was destroyed: ${input}`);
+      }
       this.__setRecordingFor(input, init, response);
-      this.__decrementOutstandingRequestCount();
       return response;
     };
 
     if (!testing) {
-      return doFetch();
+      return fetch(input, init);
     }
 
     let hasRecordings = !!this.get('__recordings');
@@ -64,9 +50,9 @@ export default Service.extend({
     if (this.get('__shouldRecord')) {
       info('Recording request for ', input);
 
-      return doFetch().then(recordResponse);
+      return fetch(input, init).then(recordResponse);
     } else {
-      return doFetch();
+      return fetch(input, init);
     }
   },
 

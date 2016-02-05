@@ -10,17 +10,17 @@ const {
   testing
 } = Ember;
 
-const isDevelopingAddon = true;
+const isDevelopingAddon = false;
 
-const info = (() => isDevelopingAddon ? Logger.info(arguments) : null);
+const info = (() => isDevelopingAddon ? Logger.info(...arguments) : null);
 
 export default {
-  useRecording ({ name, application, assert: testAssert }, callback) {
+  useRecording ({ recordingName, application }, callback) {
     // TODO: consider removing this restriction
     assert('useRecording may only be used in testing mode', testing);
 
     let fetchService = application.__container__.lookup('service:fetch');
-    let existingRecording = recordingFor(name);
+    let existingRecording = recordingFor(recordingName);
     let isRecording;
 
     const setOnFetch = ((key, val) => run(() => fetchService.set(key, val)));
@@ -31,15 +31,14 @@ export default {
       isRecording = false;
     } else {
       isRecording = true;
-
-      testAssert = dummyAssert(testAssert);
     }
 
     setOnFetch('__shouldRecord', isRecording);
-    setOnFetch('__recordingCompleteCallback', function (newRecordings) {
+    setOnFetch('__recordingCompleteCallback', function () {
       if (isRecording) {
+        let newRecordings = fetchService.get('__recordings');
         if (newRecordings) {
-          convertToModule(newRecordings).then(recordings => downloadRecording(name, recordings));
+          convertToModule(newRecordings).then(recordings => downloadRecording(recordingName, recordings));
         } else {
           info('No new recordings to download. Something went wrong.');
         }
@@ -48,31 +47,9 @@ export default {
       }
     });
 
-    callback({ assert: testAssert });
+    callback();
   }
 };
-
-function dummyAssert (assert) {
-  function NOOP () {}
-
-  assert.expect(0);
-
-  return {
-    deepEqual: NOOP,
-    equal: NOOP,
-    expect: NOOP,
-    notDeepEqual: NOOP,
-    notEqual: NOOP,
-    notOk: NOOP,
-    notPropEqual: NOOP,
-    notStrictEqual: NOOP,
-    ok: NOOP,
-    propEqual: NOOP,
-    push: NOOP,
-    strictEqual: NOOP,
-    throws: NOOP
-  };
-}
 
 // TODO: a more exact matching alg
 // TODO: allow nested folders for recordings

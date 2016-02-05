@@ -83,7 +83,7 @@ import DiskDrive from 'ember-disk-drive/disk-drive';
 moduleFor('Acceptance: Application Route');
 
 test('Cool stuff is shown', function (assert) {
-  DiskDrive.useRecording('application-route-recording', this.application, function () {
+  DiskDrive.useRecording({ recordingName: 'application-route', application: this.application }, function () {
     visit('/');
 
     andThen(function () {
@@ -93,13 +93,13 @@ test('Cool stuff is shown', function (assert) {
 });
 ```
 
-All requests made will be saved in a file called 'application-route-recording.js' and downloaded
+All requests made will be saved in a file called 'application-route.js' and downloaded
 once the test completes. Put the file in your `tests/recordings/` folder. The recorded
 responses will be used when tests are run. Any requests that don't have a recorded response
 will be passed through. If you wish to rerecord a test, simply delete the appropriate
 recording first (in this case, `tests/recordings/application-route-recording.js`).
 
-If making multiple recordings in a single session, your browser will prompt you to allow multiple files
+If making multiple recordings in a single session, your browser should prompt you to allow multiple files
 to be downloaded.
 
 Browser compatibility has not yet been tested - development is happening in Chrome. Saving new recordings
