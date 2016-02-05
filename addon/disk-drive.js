@@ -10,10 +10,12 @@ const {
   testing
 } = Ember;
 
-const info = Logger.info;
+const isDevelopingAddon = true;
+
+const info = (() => isDevelopingAddon ? Logger.info(arguments) : null);
 
 export default {
-  useRecording (name, application, callback) {
+  useRecording ({ name, application, assert: testAssert }, callback) {
     // TODO: consider removing this restriction
     assert('useRecording may only be used in testing mode', testing);
 
@@ -29,6 +31,8 @@ export default {
       isRecording = false;
     } else {
       isRecording = true;
+
+      testAssert = dummyAssert(testAssert);
     }
 
     setOnFetch('__shouldRecord', isRecording);
@@ -44,9 +48,31 @@ export default {
       }
     });
 
-    run(callback);
+    callback({ assert: testAssert });
   }
 };
+
+function dummyAssert (assert) {
+  function NOOP () {}
+
+  assert.expect(0);
+
+  return {
+    deepEqual: NOOP,
+    equal: NOOP,
+    expect: NOOP,
+    notDeepEqual: NOOP,
+    notEqual: NOOP,
+    notOk: NOOP,
+    notPropEqual: NOOP,
+    notStrictEqual: NOOP,
+    ok: NOOP,
+    propEqual: NOOP,
+    push: NOOP,
+    strictEqual: NOOP,
+    throws: NOOP
+  };
+}
 
 // TODO: a more exact matching alg
 // TODO: allow nested folders for recordings
