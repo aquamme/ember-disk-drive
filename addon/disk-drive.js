@@ -4,7 +4,6 @@ import { Response } from 'fetch';
 
 const {
   Logger,
-  RSVP,
   assert,
   run,
   testing
@@ -104,7 +103,7 @@ function buildResponseObjects (recordings) {
 // TODO: get rid of object/array conversion funkiness
 // TODO: don't assume the `input` param for fetch is a string
 function serializeRecordings (recordings = {}) {
-  return RSVP.all(Object.keys(recordings).map(recordingKey => {
+  return Promise.all(Object.keys(recordings).map(recordingKey => { //jshint ignore:line
     let recording = recordings[recordingKey];
 
     return convertRequestToPlainObject(recording.response).then(pojodResponse => {
@@ -120,7 +119,7 @@ function serializeRecordings (recordings = {}) {
 
 // TODO: support more than just json
 function convertRequestToPlainObject (request) {
-  return request.json().then(json => {
+  return convertRequestToJson(request).then(json => {
     return {
       body: json,
       init: {
@@ -128,6 +127,26 @@ function convertRequestToPlainObject (request) {
         statusText: request.statusText,
         headers: request.headers,
       }
+    };
+  });
+}
+
+// Taken from the fetch polyfill to work around an issue where calling fileReaderReady can cause
+// qunit.stop to be called outside of a test context, which throws an error, breaking the test suite
+function convertRequestToJson (request) {
+  let reader = new FileReader();
+  reader.readAsText(request._bodyBlob);
+  return fileReaderReady(reader).then(JSON.parse);
+}
+
+function fileReaderReady(reader) {
+  // Use the native Promise API here instead of RSVP to avoid calling qunit.stop
+  return new Promise(function(resolve, reject) { //jshint ignore:line
+    reader.onload = function() {
+      resolve(reader.result);
+    };
+    reader.onerror = function() {
+      reject(reader.error);
     };
   });
 }
