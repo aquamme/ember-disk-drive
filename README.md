@@ -6,12 +6,11 @@ Includes
 * DiskDrive - used for selecting which recording to use in an acceptance test
 
 #### Warning
-This addon was hacked into shape in a few hours over a couple of days. Quality
-is not guaranteed at this stage. I am using this addon in my own projects, but YMMV.
-Only the minimum features have been added at this point. There are limitations (documented
-below). My short-term goal was to get as close to my ideal API as possible - code quality
-(comments, SRP, naming, every other quality metric) was not a focus. This should be considered
-a prototype, but I aim to make this addon more robust in the future.
+I am using this addon in my own projects, but YMMV.
+Only the minimum features have been added at this point. My short-term goal was to get as
+close to my ideal API as possible - code quality (comments, SRP, naming, every other quality metric)
+was not a focus. This should be considered a prototype, but I aim to make this addon more
+robust in the future.
 
 Disclaimer aside, I don't see the API changing much, so the addon should be safe to use
 in that regard.
@@ -52,7 +51,7 @@ be recorded.
 
 ## Installation
 
-I haven't published this to npm yet as it's still in 0.0.X territory, so you'll need to
+I haven't published this to npm yet as it's still in the early stages, so you'll need to
 
 * Add a line in your package.json file that points to this repository
 * `npm install`

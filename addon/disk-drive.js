@@ -94,6 +94,15 @@ function buildResponseObjects (recordings) {
   Object.keys(recordings).forEach(key => {
     let ra = recordings[key].response;
 
+    let headerMap = ra.init.headers.map;
+    let headers = {};
+
+    Object.keys(headerMap).forEach(key => {
+      headers[key] = headerMap[key][0];
+    });
+
+    ra.init.headers = headers;
+
     recordings[key].response = new Response(JSON.stringify(ra.body), ra.init);
   });
 
