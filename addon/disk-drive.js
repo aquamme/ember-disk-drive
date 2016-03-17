@@ -20,29 +20,23 @@ export default {
 
     let fetchService = application.__container__.lookup('service:fetch');
     let existingRecording = recordingFor(recordingName);
-    let isRecording;
 
     const setOnFetch = ((key, val) => run(() => fetchService.set(key, val)));
+
+    setOnFetch('__shouldRecord', true);
 
     if (existingRecording) {
       existingRecording = buildResponseObjects(existingRecording);
       setOnFetch('__recordings', existingRecording);
-      isRecording = false;
-    } else {
-      isRecording = true;
     }
 
-    setOnFetch('__shouldRecord', isRecording);
     setOnFetch('__recordingCompleteCallback', function () {
-      if (isRecording) {
-        let newRecordings = fetchService.get('__recordings');
-        if (newRecordings) {
-          convertToModule(newRecordings).then(recordings => downloadRecording(recordingName, recordings));
-        } else {
-          info('No new recordings to download. Something went wrong.');
-        }
+      let newRecordings = fetchService.get('__recordings');
+      let hasNewRecordings = fetchService.get('__hasNewRecordings');
+      if (hasNewRecordings) {
+        convertToModule(newRecordings).then(recordings => downloadRecording(recordingName, recordings));
       } else {
-        info('Did not record anything.');
+        info('No new recordings to download. Something went wrong.');
       }
     });
 
@@ -143,9 +137,15 @@ function convertRequestToPlainObject (request) {
 // Taken from the fetch polyfill to work around an issue where calling fileReaderReady can cause
 // qunit.stop to be called outside of a test context, which throws an error, breaking the test suite
 function convertRequestToJson (request) {
-  let reader = new FileReader();
-  reader.readAsText(request._bodyBlob);
-  return fileReaderReady(reader).then(JSON.parse);
+  // _bodyBlob is present if the request was made this session
+  // _bodyText is present if the request was read from a previous recording
+  if (request._bodyBlob) {
+    let reader = new FileReader();
+    reader.readAsText(request._bodyBlob);
+    return fileReaderReady(reader).then(JSON.parse);
+  } else {
+    return Promise.resolve(JSON.parse(request._bodyText)); //jshint ignore:line
+  }
 }
 
 function fileReaderReady(reader) {

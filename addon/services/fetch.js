@@ -16,6 +16,7 @@ const info = (() => isDevelopingAddon ? Logger.info(...arguments) : null);
 export default Service.extend({
   __recordings: null,
   __shouldRecord: false,
+  __hasNewRecordings: false,
 
   willDestroy () {
     this.__recordingCompleteCallback(this.get('__recordings'));
@@ -49,6 +50,8 @@ export default Service.extend({
 
     if (this.get('__shouldRecord')) {
       info('Recording request for ', input);
+
+      this.set('__hasNewRecordings', true);
 
       return fetch(input, init).then(recordResponse);
     } else {
