@@ -1,6 +1,13 @@
 import Ember from 'ember';
 
-function includesQueryParams(url, queryParams) {
+/*
+  TODO
+support checking post params
+support using a regex
+improve helper api
+*/
+
+function includesQueryParams(url, queryParams = {}) {
   return Object.keys(queryParams).map(key => `${key}=${queryParams[key]}`).every(param => url.includes(param));
 }
 
