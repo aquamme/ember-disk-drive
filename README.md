@@ -1,5 +1,7 @@
 # Ember-disk-drive
 
+## This prototype is not maintained. I recommend using [ember-cli-mirage](https://github.com/samselikoff/ember-cli-mirage) instead. 
+
 A set of tools designed to faciliate the recording of API responses.
 Includes
 * ember-fetch service - must be used for a request to be recordable
